@@ -60,24 +60,29 @@ write_env() {
   read -p "Bedrock model ID [default anthropic.claude-3-5-sonnet-20241022-v2:0]: " MODEL_ID_IN
   MODEL_ID_IN=${MODEL_ID_IN:-anthropic.claude-3-5-sonnet-20241022-v2:0}
 
-  cat > "$APP_DIR/.env" << EOF
-PORT=${port}
-DOMAIN=${domain}
-SESSION_SECRET=$(openssl rand -hex 32)
+  # IMPORTANT: use printf (not an unquoted heredoc) so that special shell
+  # characters in passwords/keys ($ ` \ etc) are written literally instead
+  # of being expanded/corrupted by bash.
+  local SESSION_SECRET_VAL
+  SESSION_SECRET_VAL=$(openssl rand -hex 32)
+  {
+    printf 'PORT=%s\n' "$port"
+    printf 'DOMAIN=%s\n' "$domain"
+    printf 'SESSION_SECRET=%s\n\n' "$SESSION_SECRET_VAL"
 
-ADMIN_EMAIL=${ADMIN_EMAIL_IN}
-ADMIN_PASS=${ADMIN_PASS_IN}
+    printf 'ADMIN_EMAIL=%s\n' "$ADMIN_EMAIL_IN"
+    printf 'ADMIN_PASS=%s\n\n' "$ADMIN_PASS_IN"
 
-EMAIL_HOST=${SMTP_HOST_IN}
-EMAIL_USER=${SMTP_USER_IN}
-EMAIL_PASS=${SMTP_PASS_IN}
-SMTP_PORT=${SMTP_PORT_IN}
-IMAP_PORT=993
+    printf 'EMAIL_HOST=%s\n' "$SMTP_HOST_IN"
+    printf 'EMAIL_USER=%s\n' "$SMTP_USER_IN"
+    printf 'EMAIL_PASS=%s\n' "$SMTP_PASS_IN"
+    printf 'SMTP_PORT=%s\n' "$SMTP_PORT_IN"
+    printf 'IMAP_PORT=993\n\n'
 
-AWS_REGION=${AWS_REGION_IN}
-AWS_BEARER_TOKEN_BEDROCK=${AWS_TOKEN_IN}
-BEDROCK_MODEL_ID=${MODEL_ID_IN}
-EOF
+    printf 'AWS_REGION=%s\n' "$AWS_REGION_IN"
+    printf 'AWS_BEARER_TOKEN_BEDROCK=%s\n' "$AWS_TOKEN_IN"
+    printf 'BEDROCK_MODEL_ID=%s\n' "$MODEL_ID_IN"
+  } > "$APP_DIR/.env"
   info "All settings saved to $APP_DIR/.env"
 }
 
