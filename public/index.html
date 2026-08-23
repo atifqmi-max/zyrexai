@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZyreX - Login</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h1>ZyreX</h1>
+    <p class="sub">Sign in to continue</p>
+    <div id="msg"></div>
+    <div id="loginForm">
+      <div class="field"><label>Email</label><input type="email" id="email" placeholder="you@example.com"></div>
+      <div class="field"><label>Password</label><input type="password" id="password" placeholder="••••••••"></div>
+      <button class="btn" id="loginBtn">Login</button>
+      <div class="linkrow">
+        <a href="/forgot-password.html">Forgot password?</a> &nbsp;|&nbsp;
+        <a href="/register.html">Create an account</a>
+      </div>
+    </div>
+
+    <div id="otpForm" style="display:none">
+      <p class="sub">New device detected. Enter the code sent to your email.</p>
+      <div class="field"><label>Verification Code</label><input type="text" id="otpCode" maxlength="6" placeholder="123456"></div>
+      <button class="btn" id="verifyBtn">Verify & Continue</button>
+      <button class="btn secondary" id="resendBtn" style="margin-top:8px">Resend Code</button>
+    </div>
+  </div>
+</div>
+<script src="/js/common.js"></script>
+<script src="/js/login.js"></script>
+</body>
+</html>

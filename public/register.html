@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZyreX - Register</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-card">
+    <h1>ZyreX</h1>
+    <p class="sub">Create your account</p>
+    <div id="msg"></div>
+    <div id="regForm">
+      <div class="field"><label>Full Name</label><input type="text" id="name"></div>
+      <div class="field"><label>Email</label><input type="email" id="email"></div>
+      <div class="field"><label>Password</label><input type="password" id="password"></div>
+      <div class="field"><label>Confirm Password</label><input type="password" id="confirmPassword"></div>
+      <button class="btn" id="regBtn">Register</button>
+      <div class="linkrow"><a href="/index.html">Already have an account? Login</a></div>
+    </div>
+    <div id="otpForm" style="display:none">
+      <p class="sub">Enter the code sent to your email to verify your account.</p>
+      <div class="field"><label>Verification Code</label><input type="text" id="otpCode" maxlength="6"></div>
+      <button class="btn" id="verifyBtn">Verify Account</button>
+      <button class="btn secondary" id="resendBtn" style="margin-top:8px">Resend Code</button>
+    </div>
+  </div>
+</div>
+<script src="/js/common.js"></script>
+<script src="/js/register.js"></script>
+</body>
+</html>

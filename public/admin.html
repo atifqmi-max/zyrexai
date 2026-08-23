@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZyreX Admin</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div id="loginScreen" class="auth-wrap">
+  <div class="auth-card">
+    <h1>ZyreX Admin</h1>
+    <div id="msg"></div>
+    <div class="field"><label>Email</label><input type="email" id="email"></div>
+    <div class="field"><label>Password</label><input type="password" id="password"></div>
+    <button class="btn" id="loginBtn">Login</button>
+  </div>
+</div>
+
+<div id="adminShell" class="admin-shell" style="display:none">
+  <div class="admin-nav">
+    <h2>ZyreX Admin</h2>
+    <div class="nav-item active" data-tab="dashboard">Dashboard</div>
+    <div class="nav-item" data-tab="users">Users</div>
+    <div class="nav-item" data-tab="support">Customer Support</div>
+    <button class="btn secondary" id="adminLogout" style="margin-top:20px">Logout</button>
+  </div>
+  <div class="admin-content">
+    <div id="tab-dashboard">
+      <h2>Dashboard</h2>
+      <div class="stat-grid" id="statGrid"></div>
+    </div>
+    <div id="tab-users" style="display:none">
+      <h2>Users</h2>
+      <input class="search-box" id="userSearch" placeholder="Search users by name or email...">
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+        <tbody id="userTable"></tbody>
+      </table>
+    </div>
+    <div id="tab-support" style="display:none">
+      <h2>Customer Support</h2>
+      <table>
+        <thead><tr><th>ID</th><th>User</th><th>Category</th><th>Message</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="ticketTable"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- User chats modal -->
+<div class="overlay" id="chatsOverlay" style="display:none">
+  <div class="modal" style="max-width:700px">
+    <h2 id="chatsModalTitle">User Chats</h2>
+    <div id="chatsList"></div>
+    <button class="btn secondary" id="closeChatsModal" style="margin-top:12px">Close</button>
+  </div>
+</div>
+
+<div class="overlay" id="msgsOverlay" style="display:none">
+  <div class="modal" style="max-width:700px">
+    <h2>Chat Messages</h2>
+    <div id="msgsList" style="max-height:400px;overflow-y:auto"></div>
+    <button class="btn secondary" id="closeMsgsModal" style="margin-top:12px">Close</button>
+  </div>
+</div>
+
+<script src="/js/common.js"></script>
+<script src="/js/admin.js"></script>
+</body>
+</html>

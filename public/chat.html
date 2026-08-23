@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZyreX</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="app">
+  <div class="sidebar">
+    <div class="sidebar-header"><h2>ZyreX</h2></div>
+    <button class="newchat-btn" id="newChatBtn">+ New Chat</button>
+    <div class="chat-list" id="chatList"></div>
+    <div class="sidebar-footer">
+      <button class="btn secondary" id="supportBtn">Customer Support</button>
+      <button class="btn secondary" id="logoutBtn">Logout</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <div id="chatTitle" style="font-weight:600">Select or start a chat</div>
+      <label style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px">
+        <input type="checkbox" id="webSearchToggle"> Web Search
+      </label>
+    </div>
+    <div class="messages" id="messages"></div>
+    <div class="composer">
+      <input type="file" id="fileInput" style="display:none">
+      <button class="icon-btn" id="attachBtn" title="Attach file">📎</button>
+      <textarea id="input" rows="1" placeholder="Message ZyreX..."></textarea>
+      <button class="send-btn" id="sendBtn">Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- Support Modal -->
+<div class="overlay" id="supportOverlay" style="display:none">
+  <div class="modal">
+    <h2>Customer Support</h2>
+    <div id="supportMsg"></div>
+    <div class="field">
+      <label>What is your problem related to?</label>
+      <select id="supportCategory">
+        <option>Account / Login</option>
+        <option>AI / Chat issues</option>
+        <option>Billing / Subscription</option>
+        <option>Suspended Account</option>
+        <option>Bug Report</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Describe your problem</label>
+      <textarea id="supportMessage" rows="5"></textarea>
+    </div>
+    <button class="btn" id="submitSupportBtn">Submit</button>
+    <button class="btn secondary" id="closeSupportBtn" style="margin-top:8px">Close</button>
+  </div>
+</div>
+
+<script src="/js/common.js"></script>
+<script src="/js/chat.js"></script>
+</body>
+</html>
