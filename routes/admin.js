@@ -9,7 +9,9 @@ function requireAdmin(req, res, next) {
 
 router.post('/login', (req, res) => {
   const { email, password } = req.body;
-  if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASS) {
+  const envEmail = (process.env.ADMIN_EMAIL || '').trim();
+  const envPass = (process.env.ADMIN_PASS || '').trim();
+  if ((email || '').trim() === envEmail && password === envPass) {
     req.session.isAdmin = true;
     return res.json({ ok: true });
   }
