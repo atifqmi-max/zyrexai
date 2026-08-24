@@ -72,6 +72,12 @@ CREATE TABLE IF NOT EXISTS visits (
   visit_date TEXT DEFAULT (date('now')),
   UNIQUE(ip, visit_date)
 );
+
+CREATE TABLE IF NOT EXISTS sessions (
+  sid TEXT PRIMARY KEY,
+  sess TEXT NOT NULL,
+  expires INTEGER
+);
 `);
 
 module.exports = db;
