@@ -1,0 +1,282 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root{
+  --void:#0a0b12;
+  --panel:#0f1119;
+  --panel-soft:#161826;
+  --violet:#7c6cf6;
+  --violet-deep:#4b3fd1;
+  --amber:#ffb454;
+  --ink:#eef0f5;
+  --muted:#8b8fa3;
+  --line: rgba(255,255,255,0.08);
+}
+
+*{box-sizing:border-box}
+
+body.hero-body{
+  margin:0;
+  min-height:100vh;
+  background:var(--void);
+  color:var(--ink);
+  font-family:'Inter',-apple-system,sans-serif;
+}
+
+.hero-shell{
+  display:flex;
+  min-height:100vh;
+}
+
+/* ---------- LEFT: bot stage ---------- */
+.stage{
+  position:relative;
+  flex:1 1 46%;
+  min-height:320px;
+  overflow:hidden;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(124,108,246,0.16), transparent 55%),
+    radial-gradient(ellipse at 75% 80%, rgba(255,180,84,0.08), transparent 50%),
+    var(--panel);
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  padding:32px;
+  border-right:1px solid var(--line);
+}
+
+.stage::before{
+  /* faint circuit-dot grid */
+  content:'';
+  position:absolute;
+  inset:0;
+  background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(circle at 50% 45%, black 0%, transparent 75%);
+  pointer-events:none;
+}
+
+.status-pill{
+  position:relative;
+  z-index:2;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  width:fit-content;
+  padding:7px 14px;
+  border:1px solid var(--line);
+  border-radius:100px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11.5px;
+  letter-spacing:0.04em;
+  color:var(--muted);
+  background:rgba(255,255,255,0.02);
+}
+.status-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:#5ee6a8;
+  box-shadow:0 0 8px #5ee6a8;
+  animation:pulseDot 2.2s ease-in-out infinite;
+}
+@keyframes pulseDot{
+  0%,100%{opacity:1}
+  50%{opacity:0.35}
+}
+
+.bot-wrap{
+  position:relative;
+  z-index:2;
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  animation:botFloat 6s ease-in-out infinite;
+}
+@keyframes botFloat{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-10px)}
+}
+
+.bot-glow{
+  position:absolute;
+  width:260px;height:260px;
+  background:radial-gradient(circle, rgba(124,108,246,0.35), transparent 70%);
+  filter:blur(10px);
+  border-radius:50%;
+  z-index:0;
+}
+
+#botSvg{
+  position:relative;
+  z-index:1;
+  width:min(220px, 40vw);
+  height:auto;
+}
+
+.eye{
+  transform-box:fill-box;
+  transform-origin:center;
+  transition:transform 0.09s ease;
+}
+.eye.blink{
+  transform:scaleY(0.12);
+}
+
+.particle{
+  position:absolute;
+  width:3px;height:3px;
+  border-radius:50%;
+  background:var(--amber);
+  opacity:0.5;
+  animation:drift 7s ease-in-out infinite;
+}
+@keyframes drift{
+  0%,100%{transform:translateY(0) translateX(0); opacity:0.15}
+  50%{transform:translateY(-16px) translateX(6px); opacity:0.7}
+}
+
+.stage-footer{
+  position:relative;
+  z-index:2;
+}
+.stage-wordmark{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:700;
+  font-size:22px;
+  color:var(--ink);
+  margin:0 0 6px;
+  letter-spacing:-0.01em;
+}
+.stage-tagline{
+  margin:0;
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.5;
+  max-width:320px;
+}
+
+/* ---------- RIGHT: form ---------- */
+.form-stage{
+  flex:1 1 54%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:32px;
+  background:var(--void);
+}
+
+.form-card{
+  width:100%;
+  max-width:380px;
+}
+
+.form-eyebrow{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--violet);
+  margin:0 0 10px;
+}
+.form-title{
+  font-family:'Space Grotesk',sans-serif;
+  font-weight:600;
+  font-size:28px;
+  margin:0 0 8px;
+  letter-spacing:-0.01em;
+}
+.form-sub{
+  margin:0 0 28px;
+  color:var(--muted);
+  font-size:14.5px;
+}
+
+.hfield{margin-bottom:16px}
+.hfield label{
+  display:block;
+  font-size:12.5px;
+  color:var(--muted);
+  margin-bottom:7px;
+  font-weight:500;
+}
+.hfield input{
+  width:100%;
+  padding:12px 14px;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--panel-soft);
+  color:var(--ink);
+  font-size:14.5px;
+  font-family:'Inter',sans-serif;
+  transition:border-color 0.15s ease, background 0.15s ease;
+}
+.hfield input:focus{
+  outline:none;
+  border-color:var(--violet);
+  background:#1a1c2c;
+}
+
+.hbtn{
+  width:100%;
+  padding:13px;
+  border-radius:10px;
+  border:none;
+  background:linear-gradient(180deg, var(--violet), var(--violet-deep));
+  color:#fff;
+  font-weight:600;
+  font-size:14.5px;
+  cursor:pointer;
+  font-family:'Inter',sans-serif;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15);
+  transition:filter 0.15s ease, transform 0.1s ease;
+}
+.hbtn:hover{filter:brightness(1.08)}
+.hbtn:active{transform:translateY(1px)}
+.hbtn.secondary{
+  background:var(--panel-soft);
+  border:1px solid var(--line);
+  box-shadow:none;
+}
+.hbtn.secondary:hover{background:#1a1c2c}
+.hbtn:disabled{opacity:0.5;cursor:not-allowed}
+
+.hlinkrow{
+  text-align:center;
+  margin-top:18px;
+  font-size:13.5px;
+  color:var(--muted);
+}
+.hlinkrow a{color:var(--violet); text-decoration:none}
+.hlinkrow a:hover{text-decoration:underline}
+
+.hmsg{
+  padding:11px 14px;
+  border-radius:10px;
+  margin-bottom:18px;
+  font-size:13.5px;
+  line-height:1.5;
+}
+.hmsg.error{background:rgba(229,83,75,0.12); color:#ff9b93; border:1px solid rgba(229,83,75,0.3)}
+.hmsg.ok{background:rgba(63,185,80,0.12); color:#7ee08a; border:1px solid rgba(63,185,80,0.3)}
+
+/* common.js writes generic .msg classes (shared across all pages) - style them the same way here */
+.msg{
+  padding:11px 14px;
+  border-radius:10px;
+  margin-bottom:18px;
+  font-size:13.5px;
+  line-height:1.5;
+}
+.msg.error{background:rgba(229,83,75,0.12); color:#ff9b93; border:1px solid rgba(229,83,75,0.3)}
+.msg.ok{background:rgba(63,185,80,0.12); color:#7ee08a; border:1px solid rgba(63,185,80,0.3)}
+
+@media (max-width: 860px){
+  .hero-shell{flex-direction:column}
+  .stage{flex:0 0 auto; min-height:260px; border-right:none; border-bottom:1px solid var(--line)}
+  .bot-wrap{animation-duration:5s}
+  #botSvg{width:140px}
+  .form-stage{flex:1 1 auto}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .bot-wrap, .status-dot, .particle{animation:none !important}
+}
