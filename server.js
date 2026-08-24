@@ -61,8 +61,9 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'zyrex_secret',
   resave: false,
   saveUninitialized: false,
+  rolling: true, // refresh expiry on every visit, so active users never get logged out
   cookie: {
-    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
     sameSite: 'lax',
     secure: false
   }
