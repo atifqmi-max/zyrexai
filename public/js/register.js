@@ -1,5 +1,11 @@
 let pendingEmail = null;
 
+// If already logged in (valid session), skip straight to chat.
+(async () => {
+  const me = await api('/api/auth/me', null, 'GET');
+  if (me.loggedIn) { location.href = '/chat.html'; return; }
+})();
+
 document.getElementById('regBtn').onclick = async () => {
   const name = document.getElementById('name').value.trim();
   const email = document.getElementById('email').value.trim();
