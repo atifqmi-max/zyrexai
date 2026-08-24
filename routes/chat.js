@@ -104,6 +104,9 @@ router.post('/chats/:id/messages', requireAuth, async (req, res) => {
     res.json({ reply });
   } catch (err) {
     console.error('Bedrock error:', err);
+    const errText = 'Error: AI request failed: ' + err.message;
+    db.prepare('INSERT INTO messages (chat_id, role, content) VALUES (?, ?, ?)').run(chat.id, 'assistant', errText);
+    db.prepare(`UPDATE chats SET updated_at=datetime('now') WHERE id=?`).run(chat.id);
     res.status(500).json({ error: 'AI request failed: ' + err.message });
   }
 });
