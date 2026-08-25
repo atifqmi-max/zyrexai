@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="view-transition" content="same-origin">
 <title>ZyreX - Login</title>
 <link rel="stylesheet" href="/css/login-hero.css">
 </head>
@@ -13,15 +14,21 @@
     <div class="status-pill"><span class="status-dot"></span> SYSTEM ONLINE</div>
 
     <div class="bot-wrap">
+      <div class="bot-shadow"></div>
       <div class="bot-glow"></div>
       <svg id="botSvg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <linearGradient id="headGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#5a4bd6"/>
+          <linearGradient id="headGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#8b7cf9"/>
+            <stop offset="55%" stop-color="#5a4bd6"/>
             <stop offset="100%" stop-color="#2c2470"/>
           </linearGradient>
+          <radialGradient id="gloss" cx="35%" cy="22%" r="55%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+          </radialGradient>
           <radialGradient id="pupilGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#ffd9a0"/>
+            <stop offset="0%" stop-color="#ffe3b8"/>
             <stop offset="100%" stop-color="#ffb454"/>
           </radialGradient>
           <filter id="softGlow" x="-100%" y="-100%" width="300%" height="300%">
@@ -34,31 +41,35 @@
         </defs>
 
         <!-- antenna -->
-        <line x1="120" y1="40" x2="120" y2="16" stroke="#7c6cf6" stroke-width="3" stroke-linecap="round"/>
+        <line x1="120" y1="40" x2="120" y2="16" stroke="#8b7cf9" stroke-width="3" stroke-linecap="round"/>
         <circle cx="120" cy="11" r="6" fill="#ffb454" filter="url(#softGlow)"/>
 
         <!-- head -->
         <rect x="24" y="40" width="192" height="176" rx="46" fill="url(#headGrad)" stroke="#3a2f8f" stroke-width="2"/>
+        <rect x="24" y="40" width="192" height="176" rx="46" fill="url(#gloss)"/>
 
         <!-- circuit traces (left) -->
-        <path d="M24 100 h-10 v20 h10" fill="none" stroke="#7c6cf6" stroke-width="2" opacity="0.45" stroke-linecap="round"/>
-        <circle cx="14" cy="120" r="3" fill="#7c6cf6" opacity="0.6"/>
+        <path d="M24 100 h-10 v20 h10" fill="none" stroke="#8b7cf9" stroke-width="2" opacity="0.5" stroke-linecap="round"/>
+        <circle cx="14" cy="120" r="3" fill="#8b7cf9" opacity="0.65"/>
         <!-- circuit traces (right) -->
-        <path d="M216 150 h10 v20 h-10" fill="none" stroke="#7c6cf6" stroke-width="2" opacity="0.45" stroke-linecap="round"/>
-        <circle cx="226" cy="170" r="3" fill="#7c6cf6" opacity="0.6"/>
+        <path d="M216 150 h10 v20 h-10" fill="none" stroke="#8b7cf9" stroke-width="2" opacity="0.5" stroke-linecap="round"/>
+        <circle cx="226" cy="170" r="3" fill="#8b7cf9" opacity="0.65"/>
+
+        <!-- visor band behind eyes -->
+        <rect x="58" y="98" width="124" height="42" rx="21" fill="#0b0b16" opacity="0.55"/>
 
         <!-- eyes -->
         <g class="eye">
-          <circle cx="88" cy="118" r="24" fill="#0a0b12" stroke="#4b3fd1" stroke-width="1.5"/>
+          <circle cx="88" cy="118" r="24" fill="#0b0b16" stroke="#a89bff" stroke-width="1.5" stroke-opacity="0.55"/>
           <circle class="pupil" cx="88" cy="118" r="10" fill="url(#pupilGlow)" filter="url(#softGlow)"/>
         </g>
         <g class="eye">
-          <circle cx="152" cy="118" r="24" fill="#0a0b12" stroke="#4b3fd1" stroke-width="1.5"/>
+          <circle cx="152" cy="118" r="24" fill="#0b0b16" stroke="#a89bff" stroke-width="1.5" stroke-opacity="0.55"/>
           <circle class="pupil" cx="152" cy="118" r="10" fill="url(#pupilGlow)" filter="url(#softGlow)"/>
         </g>
 
         <!-- mouth -->
-        <path d="M100 168 q20 16 40 0" fill="none" stroke="#c9c3ff" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M100 168 q20 16 40 0" fill="none" stroke="#d8d3ff" stroke-width="3.5" stroke-linecap="round"/>
       </svg>
     </div>
 
