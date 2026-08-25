@@ -2,32 +2,106 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="view-transition" content="same-origin">
 <title>ZyreX - Register</title>
-<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="/css/login-hero.css">
 </head>
-<body>
-<div class="auth-wrap">
-  <div class="auth-card">
-    <h1>ZyreX</h1>
-    <p class="sub">Create your account</p>
-    <div id="msg"></div>
-    <div id="regForm">
-      <div class="field"><label>Full Name</label><input type="text" id="name"></div>
-      <div class="field"><label>Email</label><input type="email" id="email"></div>
-      <div class="field"><label>Password</label><input type="password" id="password"></div>
-      <div class="field"><label>Confirm Password</label><input type="password" id="confirmPassword"></div>
-      <button class="btn" id="regBtn">Register</button>
-      <div class="linkrow"><a href="/index.html">Already have an account? Login</a></div>
-    </div>
-    <div id="otpForm" style="display:none">
-      <p class="sub">Enter the code sent to your email to verify your account.</p>
-      <div class="field"><label>Verification Code</label><input type="text" id="otpCode" maxlength="6"></div>
-      <button class="btn" id="verifyBtn">Verify Account</button>
-      <button class="btn secondary" id="resendBtn" style="margin-top:8px">Resend Code</button>
+<body class="hero-body">
+<div class="hero-shell">
+
+  <!-- Left: register form (mirrored from login) -->
+  <div class="form-stage">
+    <div class="form-card">
+      <p class="form-eyebrow">Get started</p>
+      <h1 class="form-title">Create your account</h1>
+      <p class="form-sub">Set up your workspace in a few seconds.</p>
+
+      <div id="msg"></div>
+
+      <div id="regForm">
+        <div class="hfield"><label>Full Name</label><input type="text" id="name" placeholder="Your name"></div>
+        <div class="hfield"><label>Email</label><input type="email" id="email" placeholder="you@example.com"></div>
+        <div class="hfield"><label>Password</label><input type="password" id="password" placeholder="••••••••"></div>
+        <div class="hfield"><label>Confirm Password</label><input type="password" id="confirmPassword" placeholder="••••••••"></div>
+        <button class="hbtn" id="regBtn">Register</button>
+        <div class="hlinkrow"><a href="/index.html">Already have an account? Login</a></div>
+      </div>
+
+      <div id="otpForm" style="display:none">
+        <p class="form-sub">Enter the code sent to your email to verify your account.</p>
+        <div class="hfield"><label>Verification Code</label><input type="text" id="otpCode" maxlength="6" placeholder="123456"></div>
+        <button class="hbtn" id="verifyBtn">Verify Account</button>
+        <button class="hbtn secondary" id="resendBtn" style="margin-top:10px">Resend Code</button>
+      </div>
     </div>
   </div>
+
+  <!-- Right: animated bot stage -->
+  <div class="stage">
+    <div class="status-pill"><span class="status-dot"></span> SYSTEM ONLINE</div>
+
+    <div class="bot-wrap">
+      <div class="bot-shadow"></div>
+      <div class="bot-glow"></div>
+      <svg id="botSvg" viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="headGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#8b7cf9"/>
+            <stop offset="55%" stop-color="#5a4bd6"/>
+            <stop offset="100%" stop-color="#2c2470"/>
+          </linearGradient>
+          <radialGradient id="gloss" cx="35%" cy="22%" r="55%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+          </radialGradient>
+          <radialGradient id="pupilGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ffe3b8"/>
+            <stop offset="100%" stop-color="#ffb454"/>
+          </radialGradient>
+          <filter id="softGlow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="3.2" result="blur"/>
+            <feMerge>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+
+        <line x1="120" y1="40" x2="120" y2="16" stroke="#8b7cf9" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="120" cy="11" r="6" fill="#ffb454" filter="url(#softGlow)"/>
+
+        <rect x="24" y="40" width="192" height="176" rx="46" fill="url(#headGrad)" stroke="#3a2f8f" stroke-width="2"/>
+        <rect x="24" y="40" width="192" height="176" rx="46" fill="url(#gloss)"/>
+
+        <path d="M24 100 h-10 v20 h10" fill="none" stroke="#8b7cf9" stroke-width="2" opacity="0.5" stroke-linecap="round"/>
+        <circle cx="14" cy="120" r="3" fill="#8b7cf9" opacity="0.65"/>
+        <path d="M216 150 h10 v20 h-10" fill="none" stroke="#8b7cf9" stroke-width="2" opacity="0.5" stroke-linecap="round"/>
+        <circle cx="226" cy="170" r="3" fill="#8b7cf9" opacity="0.65"/>
+
+        <rect x="58" y="98" width="124" height="42" rx="21" fill="#0b0b16" opacity="0.55"/>
+
+        <g class="eye">
+          <circle cx="88" cy="118" r="24" fill="#0b0b16" stroke="#a89bff" stroke-width="1.5" stroke-opacity="0.55"/>
+          <circle class="pupil" cx="88" cy="118" r="10" fill="url(#pupilGlow)" filter="url(#softGlow)"/>
+        </g>
+        <g class="eye">
+          <circle cx="152" cy="118" r="24" fill="#0b0b16" stroke="#a89bff" stroke-width="1.5" stroke-opacity="0.55"/>
+          <circle class="pupil" cx="152" cy="118" r="10" fill="url(#pupilGlow)" filter="url(#softGlow)"/>
+        </g>
+
+        <path d="M100 168 q20 16 40 0" fill="none" stroke="#d8d3ff" stroke-width="3.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <div class="stage-footer">
+      <p class="stage-wordmark">ZyreX</p>
+      <p class="stage-tagline">Your AI, self-hosted. One account, every conversation, fully under your control.</p>
+    </div>
+  </div>
+
 </div>
 <script src="/js/common.js"></script>
+<script src="/js/bot.js"></script>
 <script src="/js/register.js"></script>
 </body>
 </html>
