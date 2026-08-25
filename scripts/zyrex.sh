@@ -57,6 +57,8 @@ write_env() {
   AWS_REGION_IN=${AWS_REGION_IN:-us-east-1}
   read -s -p "AWS Bedrock API key (bearer token): " AWS_TOKEN_IN
   echo ""
+  read -s -p "Backup AWS Bedrock API key (optional - used automatically if the first key ever fails, press Enter to skip): " AWS_TOKEN_2_IN
+  echo ""
   read -p "Bedrock model ID [default anthropic.claude-3-5-sonnet-20241022-v2:0]: " MODEL_ID_IN
   MODEL_ID_IN=${MODEL_ID_IN:-anthropic.claude-3-5-sonnet-20241022-v2:0}
 
@@ -81,6 +83,9 @@ write_env() {
 
     printf 'AWS_REGION=%s\n' "$AWS_REGION_IN"
     printf 'AWS_BEARER_TOKEN_BEDROCK=%s\n' "$AWS_TOKEN_IN"
+    if [ -n "$AWS_TOKEN_2_IN" ]; then
+      printf 'AWS_BEARER_TOKEN_BEDROCK_2=%s\n' "$AWS_TOKEN_2_IN"
+    fi
     printf 'BEDROCK_MODEL_ID=%s\n' "$MODEL_ID_IN"
   } > "$APP_DIR/.env"
   info "All settings saved to $APP_DIR/.env"
@@ -199,6 +204,25 @@ update_zyrex() {
   info "ZyreX updated to the latest version with zero data loss."
 }
 
+connect_domain() {
+  if [ ! -d "$APP_DIR" ]; then error "ZyreX is not installed."; return; fi
+  if [ ! -f "$APP_DIR/.env" ]; then error "No .env found. Run Install first."; return; fi
+
+  echo ""
+  warn "Make sure your domain's DNS (A record) or Cloudflare Tunnel already points to this server before continuing."
+  read -p "Enter the new domain (e.g. https://chat.yourdomain.com): " NEW_DOMAIN
+  if [ -z "$NEW_DOMAIN" ]; then
+    warn "No domain entered. Cancelled."
+    return
+  fi
+
+  sed -i "s|^DOMAIN=.*|DOMAIN=${NEW_DOMAIN}|" "$APP_DIR/.env"
+  pm2 restart "$SERVICE_NAME" --update-env
+  info "Domain updated. ZyreX is now serving at: $NEW_DOMAIN"
+  warn "If this is a fresh domain, remember to also add it in Cloudflare (or your DNS provider) and, if using a Cloudflare Tunnel, run:"
+  echo "     cloudflared tunnel route dns <your-tunnel-name> <your-new-domain>"
+}
+
 show_menu() {
   echo ""
   echo "======================================"
@@ -209,6 +233,7 @@ show_menu() {
   echo "3. Take Backup"
   echo "4. Load Backup"
   echo "5. Update ZyreX"
+  echo "6. Connect New Domain"
   echo ""
   echo "0. Exit"
   echo "======================================"
@@ -219,6 +244,7 @@ show_menu() {
     3) take_backup ;;
     4) load_backup ;;
     5) update_zyrex ;;
+    6) connect_domain ;;
     0) exit 0 ;;
     *) error "Invalid option" ;;
   esac
