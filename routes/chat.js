@@ -24,7 +24,16 @@ const upload = multer({
   limits: { fileSize: 20 * 1024 * 1024 }
 });
 
-const bedrock = new BedrockRuntimeClient({ region: process.env.AWS_REGION || 'us-east-1' });
+// ---------- AWS Bedrock: primary key + optional fallback key ----------
+// If AWS_BEARER_TOKEN_BEDROCK_2 is set, and the primary key fails for any
+// reason (expired, rate-limited, no access, etc), we automatically retry the
+// same request with the second key before giving up.
+// The Bedrock SDK reads its auth token from the AWS_BEARER_TOKEN_BEDROCK
+// env var at call time, so to try a second key we set that env var to each
+// candidate key in turn (this happens per-request, on the server only).
+const BEDROCK_KEYS = [process.env.AWS_BEARER_TOKEN_BEDROCK, process.env.AWS_BEARER_TOKEN_BEDROCK_2]
+  .filter(Boolean);
+
 const MODEL_ID = process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-5-sonnet-20241022-v2:0';
 
 // ---------- Chats CRUD ----------
@@ -81,6 +90,10 @@ router.post('/chats/:id/messages', requireAuth, async (req, res) => {
   }));
 
   try {
+    if (BEDROCK_KEYS.length === 0) {
+      throw new Error('No AWS Bedrock API key is configured in .env');
+    }
+
     const commandInput = {
       modelId: MODEL_ID,
       messages: bedrockMessages,
@@ -93,9 +106,26 @@ router.post('/chats/:id/messages', requireAuth, async (req, res) => {
         tools: [{ toolSpec: { name: 'web_search', description: 'Search the web for current information', inputSchema: { json: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] } } } }]
       };
     }
-
     const command = new ConverseCommand(commandInput);
-    const response = await bedrock.send(command);
+
+    // Try each configured key in order (primary first, then backup).
+    // If one fails for any reason, automatically fall back to the next.
+    let response = null;
+    let lastErr = null;
+    for (let i = 0; i < BEDROCK_KEYS.length; i++) {
+      process.env.AWS_BEARER_TOKEN_BEDROCK = BEDROCK_KEYS[i];
+      const client = new BedrockRuntimeClient({ region: process.env.AWS_REGION || 'us-east-1' });
+      try {
+        response = await client.send(command);
+        lastErr = null;
+        break;
+      } catch (err) {
+        lastErr = err;
+        console.error(`Bedrock request failed using key #${i + 1}${i + 1 < BEDROCK_KEYS.length ? ', trying backup key...' : ''}:`, err.message);
+      }
+    }
+    if (!response) throw lastErr;
+
     const reply = response.output?.message?.content?.map(c => c.text).filter(Boolean).join('\n') || '(no response)';
 
     db.prepare('INSERT INTO messages (chat_id, role, content) VALUES (?, ?, ?)').run(chat.id, 'assistant', reply);
