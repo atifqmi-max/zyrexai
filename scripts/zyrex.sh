@@ -63,7 +63,18 @@ write_env() {
   MODEL_ID_IN=${MODEL_ID_IN:-anthropic.claude-3-5-sonnet-20241022-v2:0}
 
   echo ""
-  warn "OpenAI backup (optional) - if AWS Bedrock ever fails completely, ZyreX automatically retries with OpenAI instead of showing an error. Press Enter to skip if you don't have one."
+  warn "Free AI backup (recommended, no credit card needed) - if AWS Bedrock ever fails, ZyreX automatically retries with Google Gemini's free tier instead of showing an error."
+  warn "Get a free key at: https://aistudio.google.com/apikey (just a Google account, no card)"
+  read -s -p "Gemini API key (press Enter to skip): " GEMINI_KEY_IN
+  echo ""
+  GEMINI_MODEL_IN="gemini-2.5-flash"
+  if [ -n "$GEMINI_KEY_IN" ]; then
+    read -p "Gemini model [default gemini-2.5-flash]: " GEMINI_MODEL_INPUT
+    GEMINI_MODEL_IN=${GEMINI_MODEL_INPUT:-gemini-2.5-flash}
+  fi
+
+  echo ""
+  warn "OpenAI backup (optional, needs billing/credits on your OpenAI account) - press Enter to skip if you don't have one."
   read -s -p "OpenAI API key (starts with sk-...): " OPENAI_KEY_IN
   echo ""
   OPENAI_MODEL_IN="gpt-4o-mini"
@@ -98,6 +109,10 @@ write_env() {
     fi
     printf 'BEDROCK_MODEL_ID=%s\n\n' "$MODEL_ID_IN"
 
+    if [ -n "$GEMINI_KEY_IN" ]; then
+      printf 'GEMINI_API_KEY=%s\n' "$GEMINI_KEY_IN"
+      printf 'GEMINI_MODEL=%s\n' "$GEMINI_MODEL_IN"
+    fi
     if [ -n "$OPENAI_KEY_IN" ]; then
       printf 'OPENAI_API_KEY=%s\n' "$OPENAI_KEY_IN"
       printf 'OPENAI_MODEL=%s\n' "$OPENAI_MODEL_IN"
