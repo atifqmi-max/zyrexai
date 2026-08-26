@@ -36,12 +36,12 @@ const BEDROCK_KEYS = [process.env.AWS_BEARER_TOKEN_BEDROCK, process.env.AWS_BEAR
 
 const MODEL_ID = process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-5-sonnet-20241022-v2:0';
 
-// ---------- OpenAI: used as a fallback if every AWS Bedrock key fails ----------
-// Uses Node's built-in fetch, no extra npm package needed.
-async function callOpenAI(bedrockMessages) {
-  if (!process.env.OPENAI_API_KEY) throw new Error('No OPENAI_API_KEY configured');
-
-  const openaiMessages = [
+// ---------- Free/backup AI providers, used if every AWS Bedrock key fails ----------
+// Generic helper: works with any OpenAI-compatible chat completions endpoint,
+// which includes OpenAI itself and Google's Gemini API (Gemini's free tier
+// needs no credit card - see https://aistudio.google.com/apikey).
+async function callOpenAICompatible(bedrockMessages, { baseUrl, apiKey, model }) {
+  const chatMessages = [
     { role: 'system', content: 'You are ZyreX, a helpful AI assistant. Format code in markdown code blocks with the correct language tag so it can be copied easily.' },
     ...bedrockMessages.map(m => ({
       role: m.role,
@@ -49,27 +49,57 @@ async function callOpenAI(bedrockMessages) {
     }))
   ];
 
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-    },
-    body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-      messages: openaiMessages,
-      max_tokens: 4096,
-      temperature: 0.7
-    })
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000); // don't hang forever if the provider is unreachable
+  try {
+    const res = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model,
+        messages: chatMessages,
+        max_tokens: 4096,
+        temperature: 0.7
+      }),
+      signal: controller.signal
+    });
 
-  if (!res.ok) {
-    const errBody = await res.text().catch(() => '');
-    throw new Error(`OpenAI API error (${res.status}): ${errBody.slice(0, 300)}`);
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => '');
+      throw new Error(`API error (${res.status}): ${errBody.slice(0, 300)}`);
+    }
+
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content || '(no response)';
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error('Request timed out after 25s');
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
   }
+}
 
-  const data = await res.json();
-  return data.choices?.[0]?.message?.content || '(no response)';
+// Fallback providers, tried in this order after all AWS Bedrock keys fail.
+// Gemini is listed first because its free tier needs no credit card.
+const FALLBACK_PROVIDERS = [];
+if (process.env.GEMINI_API_KEY) {
+  FALLBACK_PROVIDERS.push({
+    label: 'Gemini (free)',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    apiKey: process.env.GEMINI_API_KEY,
+    model: process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  });
+}
+if (process.env.OPENAI_API_KEY) {
+  FALLBACK_PROVIDERS.push({
+    label: 'OpenAI',
+    baseUrl: 'https://api.openai.com/v1',
+    apiKey: process.env.OPENAI_API_KEY,
+    model: process.env.OPENAI_MODEL || 'gpt-4o-mini'
+  });
 }
 
 // ---------- Chats CRUD ----------
@@ -126,8 +156,8 @@ router.post('/chats/:id/messages', requireAuth, async (req, res) => {
   }));
 
   try {
-    if (BEDROCK_KEYS.length === 0 && !process.env.OPENAI_API_KEY) {
-      throw new Error('No AI provider is configured (set AWS_BEARER_TOKEN_BEDROCK or OPENAI_API_KEY in .env)');
+    if (BEDROCK_KEYS.length === 0 && FALLBACK_PROVIDERS.length === 0) {
+      throw new Error('No AI provider is configured (set AWS_BEARER_TOKEN_BEDROCK or GEMINI_API_KEY in .env)');
     }
 
     const commandInput = {
@@ -136,7 +166,7 @@ router.post('/chats/:id/messages', requireAuth, async (req, res) => {
       system: [{ text: 'You are ZyreX, a helpful AI assistant. Format code in markdown code blocks with the correct language tag so it can be copied easily.' }],
       inferenceConfig: { maxTokens: 4096, temperature: 0.7 }
     };
-    // Optional server-side web search tool (Bedrock only - not used on the OpenAI fallback).
+    // Optional server-side web search tool (Bedrock only - not used on fallback providers).
     if (webSearch) {
       commandInput.toolConfig = {
         tools: [{ toolSpec: { name: 'web_search', description: 'Search the web for current information', inputSchema: { json: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] } } } }]
@@ -162,15 +192,18 @@ router.post('/chats/:id/messages', requireAuth, async (req, res) => {
       }
     }
 
-    // 2. If every AWS key failed (or none were configured), fall back to OpenAI.
-    if (reply === null && process.env.OPENAI_API_KEY) {
-      try {
-        console.error('Falling back to OpenAI...');
-        reply = await callOpenAI(bedrockMessages);
-        lastErr = null;
-      } catch (err) {
-        lastErr = err;
-        console.error('OpenAI fallback also failed:', err.message);
+    // 2. If every AWS key failed (or none were configured), try fallback providers in order.
+    if (reply === null) {
+      for (const provider of FALLBACK_PROVIDERS) {
+        try {
+          console.error(`Falling back to ${provider.label}...`);
+          reply = await callOpenAICompatible(bedrockMessages, provider);
+          lastErr = null;
+          break;
+        } catch (err) {
+          lastErr = err;
+          console.error(`${provider.label} fallback failed:`, err.message);
+        }
       }
     }
 
