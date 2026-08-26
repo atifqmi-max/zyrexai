@@ -36,6 +36,42 @@ const BEDROCK_KEYS = [process.env.AWS_BEARER_TOKEN_BEDROCK, process.env.AWS_BEAR
 
 const MODEL_ID = process.env.BEDROCK_MODEL_ID || 'anthropic.claude-3-5-sonnet-20241022-v2:0';
 
+// ---------- OpenAI: used as a fallback if every AWS Bedrock key fails ----------
+// Uses Node's built-in fetch, no extra npm package needed.
+async function callOpenAI(bedrockMessages) {
+  if (!process.env.OPENAI_API_KEY) throw new Error('No OPENAI_API_KEY configured');
+
+  const openaiMessages = [
+    { role: 'system', content: 'You are ZyreX, a helpful AI assistant. Format code in markdown code blocks with the correct language tag so it can be copied easily.' },
+    ...bedrockMessages.map(m => ({
+      role: m.role,
+      content: m.content.map(c => c.text).join('\n')
+    }))
+  ];
+
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+      messages: openaiMessages,
+      max_tokens: 4096,
+      temperature: 0.7
+    })
+  });
+
+  if (!res.ok) {
+    const errBody = await res.text().catch(() => '');
+    throw new Error(`OpenAI API error (${res.status}): ${errBody.slice(0, 300)}`);
+  }
+
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || '(no response)';
+}
+
 // ---------- Chats CRUD ----------
 router.get('/chats', requireAuth, (req, res) => {
   const chats = db.prepare('SELECT * FROM chats WHERE user_id=? AND is_suspended=0 ORDER BY updated_at DESC').all(req.user.id);
@@ -90,8 +126,8 @@ router.post('/chats/:id/messages', requireAuth, async (req, res) => {
   }));
 
   try {
-    if (BEDROCK_KEYS.length === 0) {
-      throw new Error('No AWS Bedrock API key is configured in .env');
+    if (BEDROCK_KEYS.length === 0 && !process.env.OPENAI_API_KEY) {
+      throw new Error('No AI provider is configured (set AWS_BEARER_TOKEN_BEDROCK or OPENAI_API_KEY in .env)');
     }
 
     const commandInput = {
@@ -100,7 +136,7 @@ router.post('/chats/:id/messages', requireAuth, async (req, res) => {
       system: [{ text: 'You are ZyreX, a helpful AI assistant. Format code in markdown code blocks with the correct language tag so it can be copied easily.' }],
       inferenceConfig: { maxTokens: 4096, temperature: 0.7 }
     };
-    // Optional server-side web search tool (supported on newer Bedrock/Claude versions).
+    // Optional server-side web search tool (Bedrock only - not used on the OpenAI fallback).
     if (webSearch) {
       commandInput.toolConfig = {
         tools: [{ toolSpec: { name: 'web_search', description: 'Search the web for current information', inputSchema: { json: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] } } } }]
@@ -108,32 +144,44 @@ router.post('/chats/:id/messages', requireAuth, async (req, res) => {
     }
     const command = new ConverseCommand(commandInput);
 
-    // Try each configured key in order (primary first, then backup).
-    // If one fails for any reason, automatically fall back to the next.
-    let response = null;
+    let reply = null;
     let lastErr = null;
+
+    // 1. Try each configured AWS Bedrock key in order.
     for (let i = 0; i < BEDROCK_KEYS.length; i++) {
       process.env.AWS_BEARER_TOKEN_BEDROCK = BEDROCK_KEYS[i];
       const client = new BedrockRuntimeClient({ region: process.env.AWS_REGION || 'us-east-1' });
       try {
-        response = await client.send(command);
+        const response = await client.send(command);
+        reply = response.output?.message?.content?.map(c => c.text).filter(Boolean).join('\n') || '(no response)';
         lastErr = null;
         break;
       } catch (err) {
         lastErr = err;
-        console.error(`Bedrock request failed using key #${i + 1}${i + 1 < BEDROCK_KEYS.length ? ', trying backup key...' : ''}:`, err.message);
+        console.error(`Bedrock request failed using key #${i + 1}:`, err.message);
       }
     }
-    if (!response) throw lastErr;
 
-    const reply = response.output?.message?.content?.map(c => c.text).filter(Boolean).join('\n') || '(no response)';
+    // 2. If every AWS key failed (or none were configured), fall back to OpenAI.
+    if (reply === null && process.env.OPENAI_API_KEY) {
+      try {
+        console.error('Falling back to OpenAI...');
+        reply = await callOpenAI(bedrockMessages);
+        lastErr = null;
+      } catch (err) {
+        lastErr = err;
+        console.error('OpenAI fallback also failed:', err.message);
+      }
+    }
+
+    if (reply === null) throw lastErr;
 
     db.prepare('INSERT INTO messages (chat_id, role, content) VALUES (?, ?, ?)').run(chat.id, 'assistant', reply);
     db.prepare(`UPDATE chats SET updated_at=datetime('now') WHERE id=?`).run(chat.id);
 
     res.json({ reply });
   } catch (err) {
-    console.error('Bedrock error:', err);
+    console.error('AI error:', err);
     const errText = 'Error: AI request failed: ' + err.message;
     db.prepare('INSERT INTO messages (chat_id, role, content) VALUES (?, ?, ?)').run(chat.id, 'assistant', errText);
     db.prepare(`UPDATE chats SET updated_at=datetime('now') WHERE id=?`).run(chat.id);
