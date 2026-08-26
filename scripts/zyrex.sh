@@ -57,10 +57,20 @@ write_env() {
   AWS_REGION_IN=${AWS_REGION_IN:-us-east-1}
   read -s -p "AWS Bedrock API key (bearer token): " AWS_TOKEN_IN
   echo ""
-  read -s -p "Backup AWS Bedrock API key (optional - used automatically if the first key ever fails, press Enter to skip): " AWS_TOKEN_2_IN
+  read -s -p "Backup AWS Bedrock API key (optional, press Enter to skip): " AWS_TOKEN_2_IN
   echo ""
   read -p "Bedrock model ID [default anthropic.claude-3-5-sonnet-20241022-v2:0]: " MODEL_ID_IN
   MODEL_ID_IN=${MODEL_ID_IN:-anthropic.claude-3-5-sonnet-20241022-v2:0}
+
+  echo ""
+  warn "OpenAI backup (optional) - if AWS Bedrock ever fails completely, ZyreX automatically retries with OpenAI instead of showing an error. Press Enter to skip if you don't have one."
+  read -s -p "OpenAI API key (starts with sk-...): " OPENAI_KEY_IN
+  echo ""
+  OPENAI_MODEL_IN="gpt-4o-mini"
+  if [ -n "$OPENAI_KEY_IN" ]; then
+    read -p "OpenAI model [default gpt-4o-mini]: " OPENAI_MODEL_INPUT
+    OPENAI_MODEL_IN=${OPENAI_MODEL_INPUT:-gpt-4o-mini}
+  fi
 
   # IMPORTANT: use printf (not an unquoted heredoc) so that special shell
   # characters in passwords/keys ($ ` \ etc) are written literally instead
@@ -86,7 +96,12 @@ write_env() {
     if [ -n "$AWS_TOKEN_2_IN" ]; then
       printf 'AWS_BEARER_TOKEN_BEDROCK_2=%s\n' "$AWS_TOKEN_2_IN"
     fi
-    printf 'BEDROCK_MODEL_ID=%s\n' "$MODEL_ID_IN"
+    printf 'BEDROCK_MODEL_ID=%s\n\n' "$MODEL_ID_IN"
+
+    if [ -n "$OPENAI_KEY_IN" ]; then
+      printf 'OPENAI_API_KEY=%s\n' "$OPENAI_KEY_IN"
+      printf 'OPENAI_MODEL=%s\n' "$OPENAI_MODEL_IN"
+    fi
   } > "$APP_DIR/.env"
   info "All settings saved to $APP_DIR/.env"
 }
