@@ -95,6 +95,7 @@ cp .env.example .env
 nano .env   # fill in real values
 npm install
 node server.js
+pm2 restart zyrexai --update-env
 ```
 
 ## Environment variables (`.env`)
