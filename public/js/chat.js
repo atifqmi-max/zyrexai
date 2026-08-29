@@ -45,15 +45,22 @@ async function openChat(id, title) {
   const r = await api(`/api/chats/${id}/messages`, null, 'GET');
   const box = document.getElementById('messages');
   box.innerHTML = '';
-  (r.messages || []).forEach(m => renderMessage(m.role, m.content));
+  (r.messages || []).forEach(m => renderMessage(m.role, m.content, m.attachment_path));
   box.scrollTop = box.scrollHeight;
 }
 
-function renderMessage(role, content) {
+function renderMessage(role, content, attachmentPath) {
   const box = document.getElementById('messages');
   const div = document.createElement('div');
   div.className = 'message ' + role;
   div.innerHTML = formatContent(content);
+  if (attachmentPath && /\.(png|jpe?g|webp|gif)$/i.test(attachmentPath)) {
+    const img = document.createElement('img');
+    img.src = attachmentPath;
+    img.className = 'generated-image';
+    img.alt = 'Generated image';
+    div.appendChild(img);
+  }
   box.appendChild(div);
   div.querySelectorAll('pre').forEach(pre => {
     const btn = document.createElement('button');
@@ -109,17 +116,18 @@ async function sendMessage() {
   input.value = '';
   renderMessage('user', content);
 
-  const thinking = renderMessage('assistant', 'Thinking...');
+  const generateImage = document.getElementById('imageGenToggle').checked;
+  const thinking = renderMessage('assistant', generateImage ? 'Generating image...' : 'Thinking...');
   const webSearch = document.getElementById('webSearchToggle').checked;
-  const r = await api(`/api/chats/${currentChatId}/messages`, { content, webSearch }, 'POST');
+  const r = await api(`/api/chats/${currentChatId}/messages`, { content, webSearch, generateImage }, 'POST');
   thinking.remove();
   if (r.error) { renderMessage('assistant', 'Error: ' + r.error); return; }
-  renderMessage('assistant', r.reply);
+  renderMessage('assistant', r.reply, r.imageUrl);
   loadChats(currentChatId);
 
   // Detect "save as file" style requests already answered by AI text is just shown;
   // Users can also explicitly request a downloadable file via the button below each AI code/long text reply.
-  maybeOfferDownload(r.reply);
+  if (!r.imageUrl) maybeOfferDownload(r.reply);
 }
 
 function maybeOfferDownload(reply) {
@@ -165,6 +173,52 @@ document.getElementById('submitSupportBtn').onclick = async () => {
   const r = await api('/api/support/tickets', { category, message }, 'POST');
   document.getElementById('supportMsg').innerHTML = `<div class="msg ${r.ok?'ok':'error'}">${r.ok ? 'Submitted! Our team will get back to you.' : r.error}</div>`;
   if (r.ok) document.getElementById('supportMessage').value = '';
+};
+
+// Profile modal
+function initials(name) {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+}
+
+async function openProfile() {
+  document.getElementById('profileOverlay').style.display = 'flex';
+  document.getElementById('profileMsg').innerHTML = '';
+  const r = await api('/api/auth/profile', null, 'GET');
+  if (!r.user) return;
+  document.getElementById('profileAvatar').textContent = initials(r.user.name);
+  document.getElementById('profileNameDisplay').textContent = r.user.name;
+  document.getElementById('profileEmailDisplay').textContent = r.user.email;
+  document.getElementById('profileMeta').textContent = `${r.chatCount} chat${r.chatCount === 1 ? '' : 's'} · Joined ${r.user.created_at ? r.user.created_at.split(' ')[0] : ''}`;
+  document.getElementById('editName').value = r.user.name;
+}
+
+document.getElementById('profileBtn').onclick = openProfile;
+document.getElementById('closeProfileModal').onclick = () => document.getElementById('profileOverlay').style.display = 'none';
+
+document.getElementById('saveNameBtn').onclick = async () => {
+  const name = document.getElementById('editName').value.trim();
+  if (!name) return;
+  const r = await api('/api/auth/profile', { name }, 'POST');
+  document.getElementById('profileMsg').innerHTML = `<div class="msg ${r.ok?'ok':'error'}">${r.ok ? 'Name updated' : r.error}</div>`;
+  if (r.ok) {
+    document.getElementById('profileAvatar').textContent = initials(name);
+    document.getElementById('profileNameDisplay').textContent = name;
+  }
+};
+
+document.getElementById('changePasswordBtn').onclick = async () => {
+  const currentPassword = document.getElementById('currentPassword').value;
+  const newPassword = document.getElementById('newPassword').value;
+  const confirmPassword = document.getElementById('confirmNewPassword').value;
+  const r = await api('/api/auth/change-password', { currentPassword, newPassword, confirmPassword }, 'POST');
+  document.getElementById('profileMsg').innerHTML = `<div class="msg ${r.ok?'ok':'error'}">${r.ok ? r.message : r.error}</div>`;
+  if (r.ok) {
+    document.getElementById('currentPassword').value = '';
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmNewPassword').value = '';
+  }
 };
 
 init();
