@@ -12,6 +12,7 @@
     <button class="newchat-btn" id="newChatBtn">+ New Chat</button>
     <div class="chat-list" id="chatList"></div>
     <div class="sidebar-footer">
+      <button class="btn secondary" id="profileBtn">👤 Profile</button>
       <button class="btn secondary" id="supportBtn">Customer Support</button>
       <button class="btn secondary" id="logoutBtn">Logout</button>
     </div>
@@ -19,9 +20,14 @@
   <div class="main">
     <div class="topbar">
       <div id="chatTitle" style="font-weight:600">Select or start a chat</div>
-      <label style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px">
-        <input type="checkbox" id="webSearchToggle"> Web Search
-      </label>
+      <div style="display:flex;gap:16px;align-items:center">
+        <label style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px">
+          <input type="checkbox" id="imageGenToggle"> Generate Image
+        </label>
+        <label style="font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px">
+          <input type="checkbox" id="webSearchToggle"> Web Search
+        </label>
+      </div>
     </div>
     <div class="messages" id="messages"></div>
     <div class="composer">
@@ -55,6 +61,37 @@
     </div>
     <button class="btn" id="submitSupportBtn">Submit</button>
     <button class="btn secondary" id="closeSupportBtn" style="margin-top:8px">Close</button>
+  </div>
+</div>
+
+<!-- Profile Modal -->
+<div class="overlay" id="profileOverlay" style="display:none">
+  <div class="modal">
+    <div class="profile-header">
+      <div class="avatar" id="profileAvatar">?</div>
+      <div>
+        <div class="profile-name" id="profileNameDisplay">-</div>
+        <div class="profile-email" id="profileEmailDisplay">-</div>
+        <div class="profile-meta" id="profileMeta"></div>
+      </div>
+    </div>
+    <div id="profileMsg"></div>
+
+    <div class="field">
+      <label>Display Name</label>
+      <input type="text" id="editName">
+    </div>
+    <button class="btn" id="saveNameBtn">Save Name</button>
+
+    <hr style="border:none;border-top:1px solid var(--border);margin:22px 0">
+
+    <h3 style="margin:0 0 14px;font-size:15px">Change Password</h3>
+    <div class="field"><label>Current Password</label><input type="password" id="currentPassword"></div>
+    <div class="field"><label>New Password</label><input type="password" id="newPassword"></div>
+    <div class="field"><label>Confirm New Password</label><input type="password" id="confirmNewPassword"></div>
+    <button class="btn" id="changePasswordBtn">Change Password</button>
+
+    <button class="btn secondary" id="closeProfileModal" style="margin-top:16px">Close</button>
   </div>
 </div>
 
