@@ -90,7 +90,7 @@ if (process.env.GEMINI_API_KEY) {
     label: 'Gemini (free)',
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
     apiKey: process.env.GEMINI_API_KEY,
-    model: process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+    model: process.env.GEMINI_MODEL || 'gemini-3.6-flash'
   });
 }
 if (process.env.OPENAI_API_KEY) {
@@ -100,6 +100,49 @@ if (process.env.OPENAI_API_KEY) {
     apiKey: process.env.OPENAI_API_KEY,
     model: process.env.OPENAI_MODEL || 'gpt-4o-mini'
   });
+}
+
+// ---------- Image generation (Gemini "Nano Banana" - free, reuses GEMINI_API_KEY) ----------
+async function callGeminiImage(prompt) {
+  if (!process.env.GEMINI_API_KEY) throw new Error('Image generation needs GEMINI_API_KEY set in .env');
+  const model = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image';
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': process.env.GEMINI_API_KEY
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
+      }),
+      signal: controller.signal
+    });
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => '');
+      throw new Error(`Gemini image API error (${res.status}): ${errBody.slice(0, 300)}`);
+    }
+    const data = await res.json();
+    const parts = data.candidates?.[0]?.content?.parts || [];
+    const imagePart = parts.find(p => p.inlineData);
+    const textPart = parts.find(p => p.text);
+    if (!imagePart) throw new Error('Gemini did not return an image (it may have declined the prompt)');
+    return {
+      base64: imagePart.inlineData.data,
+      mimeType: imagePart.inlineData.mimeType || 'image/png',
+      caption: textPart?.text || ''
+    };
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error('Image generation timed out after 30s');
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 // ---------- Chats CRUD ----------
@@ -137,7 +180,7 @@ router.get('/chats/:id/messages', requireAuth, (req, res) => {
 
 // ---------- Send message to AI ----------
 router.post('/chats/:id/messages', requireAuth, async (req, res) => {
-  const { content, webSearch } = req.body;
+  const { content, webSearch, generateImage } = req.body;
   const chat = db.prepare('SELECT * FROM chats WHERE id=? AND user_id=?').get(req.params.id, req.user.id);
   if (!chat) return res.status(404).json({ error: 'Not found' });
   if (chat.is_suspended) return res.status(403).json({ error: 'This chat has been suspended' });
@@ -147,6 +190,30 @@ router.post('/chats/:id/messages', requireAuth, async (req, res) => {
   if (chat.title === 'New Chat') {
     const shortTitle = content.slice(0, 40) + (content.length > 40 ? '...' : '');
     db.prepare('UPDATE chats SET title=? WHERE id=?').run(shortTitle, chat.id);
+  }
+
+  // ---- Image generation path (separate from the text-chat path below) ----
+  if (generateImage) {
+    try {
+      const img = await callGeminiImage(content);
+      const ext = img.mimeType.includes('png') ? 'png' : 'jpg';
+      const filename = `${uuidv4()}.${ext}`;
+      fs.writeFileSync(path.join(__dirname, '..', 'generated', filename), Buffer.from(img.base64, 'base64'));
+      const imageUrl = `/generated/${filename}`;
+      const replyText = img.caption || 'Here is your generated image.';
+
+      db.prepare('INSERT INTO messages (chat_id, role, content, attachment_path) VALUES (?, ?, ?, ?)')
+        .run(chat.id, 'assistant', replyText, imageUrl);
+      db.prepare(`UPDATE chats SET updated_at=datetime('now') WHERE id=?`).run(chat.id);
+
+      return res.json({ reply: replyText, imageUrl });
+    } catch (err) {
+      console.error('Image generation error:', err);
+      const errText = 'Error: Image generation failed: ' + err.message;
+      db.prepare('INSERT INTO messages (chat_id, role, content) VALUES (?, ?, ?)').run(chat.id, 'assistant', errText);
+      db.prepare(`UPDATE chats SET updated_at=datetime('now') WHERE id=?`).run(chat.id);
+      return res.status(500).json({ error: 'Image generation failed: ' + err.message });
+    }
   }
 
   const history = db.prepare('SELECT role, content FROM messages WHERE chat_id=? ORDER BY id ASC').all(chat.id);
