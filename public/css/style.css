@@ -72,3 +72,13 @@ th{color:var(--muted);font-weight:600}
 .search-box{margin-bottom:16px;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text);width:300px}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:50}
 .modal{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:500px;width:90%;max-height:80vh;overflow-y:auto}
+
+/* Profile */
+.profile-header{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.avatar{width:52px;height:52px;border-radius:50%;background:linear-gradient(180deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:#fff;flex-shrink:0}
+.profile-name{font-weight:600;font-size:16px}
+.profile-email{color:var(--muted);font-size:13px}
+.profile-meta{color:var(--muted);font-size:12px;margin-top:2px}
+
+/* Generated images inside chat bubbles */
+.message img.generated-image{max-width:100%;border-radius:10px;margin-top:8px;display:block}
