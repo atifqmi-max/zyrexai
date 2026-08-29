@@ -237,4 +237,40 @@ router.get('/me', (req, res) => {
   res.json({ loggedIn: !!user, user });
 });
 
+// ---------- Profile ----------
+router.get('/profile', (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'Not logged in' });
+  const user = db.prepare('SELECT id, name, email, created_at FROM users WHERE id=?').get(req.session.userId);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  const chatCount = db.prepare('SELECT COUNT(*) c FROM chats WHERE user_id=?').get(req.session.userId).c;
+  res.json({ user, chatCount });
+});
+
+router.post('/profile', (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'Not logged in' });
+  const { name } = req.body;
+  if (!name || !name.trim()) return res.status(400).json({ error: 'Name cannot be empty' });
+  db.prepare('UPDATE users SET name=? WHERE id=?').run(name.trim(), req.session.userId);
+  res.json({ ok: true, message: 'Profile updated' });
+});
+
+router.post('/change-password', async (req, res) => {
+  if (!req.session.userId) return res.status(401).json({ error: 'Not logged in' });
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+  if (!currentPassword || !newPassword || !confirmPassword)
+    return res.status(400).json({ error: 'All fields are required' });
+  if (newPassword !== confirmPassword)
+    return res.status(400).json({ error: 'New passwords do not match' });
+  if (newPassword.length < 6)
+    return res.status(400).json({ error: 'Password must be at least 6 characters' });
+
+  const user = db.prepare('SELECT * FROM users WHERE id=?').get(req.session.userId);
+  const match = await bcrypt.compare(currentPassword, user.password_hash);
+  if (!match) return res.status(400).json({ error: 'Current password is incorrect' });
+
+  const hash = await bcrypt.hash(newPassword, 10);
+  db.prepare('UPDATE users SET password_hash=? WHERE id=?').run(hash, user.id);
+  res.json({ ok: true, message: 'Password changed successfully' });
+});
+
 module.exports = router;
